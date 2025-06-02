@@ -1,24 +1,10 @@
 use json;
-use std::vec::Vec;
 
 #[derive(PartialEq, Debug)]
 pub enum TaskState {
     Done,
     NotStarted,
     InProgress,
-}
-impl TaskState {
-    pub fn parse(state: String) -> TaskState {
-        if state == String::from("not-started") {
-            TaskState::NotStarted
-        } else if state == String::from("in-progress") {
-            TaskState::InProgress
-        } else if state == String::from("done") {
-            TaskState::Done
-        } else {
-            panic!("The state parameter must be one of ['not-started', 'in-progress', 'done'].")
-        }
-    }
 }
 
 impl From<&TaskState> for String {
@@ -27,6 +13,21 @@ impl From<&TaskState> for String {
             TaskState::NotStarted => String::from("not-started"),
             TaskState::InProgress => String::from("in-progress"),
             TaskState::Done => String::from("done"),
+        }
+    }
+}
+
+impl TryFrom<String> for TaskState {
+    type Error = String;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == String::from("not-started") {
+            Ok(TaskState::NotStarted)
+        } else if value == String::from("in-progress") {
+            Ok(TaskState::InProgress)
+        } else if value == String::from("done") {
+            Ok(TaskState::Done)
+        } else {
+            Err("Unknown task state parameter.".to_owned())
         }
     }
 }
@@ -53,7 +54,7 @@ impl Task {
     }
 
     pub fn set_state(&mut self, state: String) {
-        self.state = TaskState::parse(state);
+        self.state = TaskState::try_from(state).unwrap();
     }
 
     pub fn set_task(&mut self, task: String) {
@@ -68,5 +69,15 @@ impl From<&Task> for json::JsonValue {
             "task" => task_model.get_task().to_owned(),
             "state" =>String::from(task_model.get_state())
         }
+    }
+}
+
+impl TryFrom<&json::JsonValue> for Task {
+    type Error = String;
+    fn try_from(json_object: &json::JsonValue) -> Result<Self, Self::Error> {
+        let id: u8 = json_object["id"].as_u8().ok_or("Can not parse task id")?;
+        let task: String = json_object["task"].to_string();
+        let state: TaskState = TaskState::try_from(json_object["state"].to_string())?;
+        Ok(Task::new(id, task, state))
     }
 }

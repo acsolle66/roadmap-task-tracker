@@ -77,7 +77,7 @@ impl JsonStore {
         if JsonStore::file_exists(&file_path) {
             let source: String = fs::read_to_string(file_path).unwrap();
             let json_object: json::JsonValue = json::parse(&source).unwrap();
-            Self::convert_from_json_object(json_object)
+            Self::from_json(json_object)
         } else {
             let store: Vec<model::Task> = vec![];
             let last_id: u8 = 0;
@@ -93,14 +93,10 @@ impl JsonStore {
         }
         return None;
     }
-    fn convert_from_json_object(json_object: json::JsonValue) -> JsonStore {
+    fn from_json(json_object: json::JsonValue) -> JsonStore {
         let mut store: Vec<model::Task> = vec![];
         for member in json_object.members() {
-            let id: u8 = member["id"].as_u8().unwrap();
-            let task: String = member["task"].as_str().unwrap().to_owned();
-            let state: model::TaskState =
-                model::TaskState::parse(member["state"].as_str().unwrap().to_owned());
-            let task: model::Task = model::Task::new(id, task, state);
+            let task: model::Task = model::Task::try_from(member).unwrap();
             store.push(task);
         }
         let length: usize = store.len();
