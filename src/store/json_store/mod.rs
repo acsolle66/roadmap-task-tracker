@@ -110,21 +110,14 @@ impl JsonStore {
 
     pub fn save(&self) {
         let file_path: path::PathBuf = JsonStore::get_file_path();
-        let contents: String = self.convert_to_json_object().to_string();
+        let contents: String = self.to_json().to_string();
         fs::write(file_path, contents).unwrap()
     }
 
-    fn convert_to_json_object(&self) -> json::JsonValue {
+    fn to_json(&self) -> json::JsonValue {
         let mut json_store: json::JsonValue = json::array![];
         for member in &self.store {
-            let id: u8 = member.get_id();
-            let task: String = member.get_task().to_owned();
-            let state: String = match member.get_state() {
-                &model::TaskState::Done => "done".to_owned(),
-                &model::TaskState::InProgress => "in-progress".to_owned(),
-                &model::TaskState::NotStarted => "not-started".to_owned(),
-            };
-            let task: json::JsonValue = json::object! {id:id, task:task, state:state};
+            let task: json::JsonValue = json::JsonValue::from(member);
             json_store.push(task).unwrap();
         }
         return json_store;

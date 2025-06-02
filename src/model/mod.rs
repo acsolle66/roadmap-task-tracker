@@ -1,3 +1,6 @@
+use json;
+use std::vec::Vec;
+
 #[derive(PartialEq, Debug)]
 pub enum TaskState {
     Done,
@@ -14,6 +17,16 @@ impl TaskState {
             TaskState::Done
         } else {
             panic!("The state parameter must be one of ['not-started', 'in-progress', 'done'].")
+        }
+    }
+}
+
+impl From<&TaskState> for String {
+    fn from(value: &TaskState) -> Self {
+        match value {
+            TaskState::NotStarted => String::from("not-started"),
+            TaskState::InProgress => String::from("in-progress"),
+            TaskState::Done => String::from("done"),
         }
     }
 }
@@ -45,5 +58,15 @@ impl Task {
 
     pub fn set_task(&mut self, task: String) {
         self.task = task;
+    }
+}
+
+impl From<&Task> for json::JsonValue {
+    fn from(task_model: &Task) -> json::JsonValue {
+        json::object! {
+            "id"  => task_model.get_id(),
+            "task" => task_model.get_task().to_owned(),
+            "state" =>String::from(task_model.get_state())
+        }
     }
 }
