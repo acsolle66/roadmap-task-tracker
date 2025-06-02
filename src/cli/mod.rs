@@ -1,7 +1,5 @@
 use std::env;
 
-use crate::task;
-
 #[derive(PartialEq, Debug)]
 pub enum Command {
     List,
@@ -9,7 +7,7 @@ pub enum Command {
     Show(u8),
     Update((u8, String)),
     Delete(u8),
-    Mark((u8, task::State)),
+    Mark((u8, String)),
     Unknown,
 }
 
@@ -85,7 +83,7 @@ impl Command {
                 let id: u8 = parse_id(&arguments[TASK_ID_ARGUMENT_INDEX]);
 
                 const TASK_ARGUMENT_INDEX: usize = 3;
-                let state: task::State = parse_state(&arguments[TASK_ARGUMENT_INDEX]);
+                let state: String = arguments[TASK_ARGUMENT_INDEX].to_owned();
 
                 Command::Mark((id, state))
             }
@@ -115,15 +113,6 @@ fn parse_id(argument: &str) -> u8 {
     argument
         .parse()
         .expect("The 'id' must be a numerical value between 1-256.")
-}
-
-fn parse_state(argument: &str) -> task::State {
-    match argument {
-        "in-progress" => task::State::InProgress,
-        "done" => task::State::Done,
-        "not-started" => task::State::NotStarted,
-        _ => panic!("The state parameter must be one of ['not-started', 'in-progress', 'done']."),
-    }
 }
 
 #[cfg(test)]
@@ -160,25 +149,6 @@ mod tests {
     #[should_panic]
     fn test_parse_id_invalid() {
         parse_id("invalid");
-    }
-
-    // parse_state tests //
-    #[test]
-    fn test_parse_state_in_progress() {
-        assert_eq!(parse_state("in-progress"), task::State::InProgress);
-    }
-    #[test]
-    fn test_parse_state_done() {
-        assert_eq!(parse_state("done"), task::State::Done);
-    }
-    #[test]
-    fn test_parse_state_not_started() {
-        assert_eq!(parse_state("not-started"), task::State::NotStarted);
-    }
-    #[test]
-    #[should_panic]
-    fn test_parse_invalid() {
-        parse_state("invalid");
     }
 
     // Command::parse_from tests
@@ -338,7 +308,7 @@ mod tests {
         let command: Command = Command::parse_from(&arguments);
         assert_eq!(
             command,
-            Command::Mark((parse_id(&task_id_argument), parse_state(&state_argument)))
+            Command::Mark((parse_id(&task_id_argument), state_argument))
         )
     }
     #[test]
