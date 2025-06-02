@@ -1,4 +1,5 @@
-use json;
+use json::JsonValue;
+use json::object;
 
 #[derive(PartialEq, Debug)]
 pub enum TaskState {
@@ -62,9 +63,9 @@ impl Task {
     }
 }
 
-impl From<&Task> for json::JsonValue {
-    fn from(task_model: &Task) -> json::JsonValue {
-        json::object! {
+impl From<&Task> for JsonValue {
+    fn from(task_model: &Task) -> JsonValue {
+        object! {
             "id"  => task_model.get_id(),
             "task" => task_model.get_task().to_owned(),
             "state" =>String::from(task_model.get_state())
@@ -72,9 +73,9 @@ impl From<&Task> for json::JsonValue {
     }
 }
 
-impl TryFrom<&json::JsonValue> for Task {
+impl TryFrom<&JsonValue> for Task {
     type Error = String;
-    fn try_from(json_object: &json::JsonValue) -> Result<Self, Self::Error> {
+    fn try_from(json_object: &JsonValue) -> Result<Self, Self::Error> {
         let id: u8 = json_object["id"].as_u8().ok_or("Can not parse task id")?;
         let task: String = json_object["task"].to_string();
         let state: TaskState = TaskState::try_from(json_object["state"].to_string())?;
