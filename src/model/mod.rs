@@ -3,9 +3,9 @@ use json::object;
 
 #[derive(PartialEq, Debug)]
 pub enum TaskState {
-    Done,
     NotStarted,
     InProgress,
+    Done,
 }
 
 impl From<&TaskState> for String {
@@ -80,5 +80,69 @@ impl TryFrom<&JsonValue> for Task {
         let task: String = json_object["task"].to_string();
         let state: TaskState = TaskState::try_from(json_object["state"].to_string())?;
         Ok(Task::new(id, task, state))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // TaskState tests //
+    // Parse TaskState from String not-started
+    #[test]
+    fn test_parse_task_state_not_started_from_string() {
+        assert_eq!(
+            TaskState::NotStarted,
+            TaskState::try_from("not-started".to_string()).unwrap()
+        );
+    }
+
+    // Parse TaskState from String in-pogress
+    #[test]
+    fn test_parse_task_state_in_progress_from_string() {
+        assert_eq!(
+            TaskState::InProgress,
+            TaskState::try_from("in-progress".to_string()).unwrap()
+        );
+    }
+
+    // Parse TaskState from String done
+    #[test]
+    fn test_parse_task_state_done_from_string() {
+        assert_eq!(
+            TaskState::Done,
+            TaskState::try_from("done".to_string()).unwrap()
+        );
+    }
+
+    // Parse TaskState from invalid String
+    #[test]
+    #[should_panic]
+    fn test_parse_task_state_from_invalid_string() {
+        TaskState::try_from("invalid".to_string()).unwrap();
+    }
+
+    // Parse String from TaskState not-started
+    #[test]
+    fn test_parse_string_not_started_from_task_state() {
+        assert_eq!(
+            "not-started".to_string(),
+            String::from(&TaskState::NotStarted)
+        );
+    }
+
+    // Parse String from TaskState in-progress
+    #[test]
+    fn test_parse_string_in_progress_from_task_state() {
+        assert_eq!(
+            "in-progress".to_string(),
+            String::from(&TaskState::InProgress)
+        );
+    }
+
+    // Parse String from TaskState done
+    #[test]
+    fn test_parse_string_done_from_task_state() {
+        assert_eq!("done".to_string(), String::from(&TaskState::Done));
     }
 }
