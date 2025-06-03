@@ -1,6 +1,6 @@
 use json::{JsonValue, object};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum TaskState {
     NotStarted,
     InProgress,
@@ -32,7 +32,7 @@ impl TryFrom<String> for TaskState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Task {
     id: u8,
     task: String,

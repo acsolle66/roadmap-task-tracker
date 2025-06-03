@@ -10,8 +10,8 @@ impl<'a> TaskService<'a> {
         TaskService { store }
     }
 
-    pub fn list(self) {
-        let tasks: &Vec<model::Task> = self.store.get_tasks();
+    pub fn list(self, state_filter: String) {
+        let tasks: Vec<model::Task> = self.store.get_tasks(state_filter);
         for task in tasks {
             let task_id: u8 = task.get_id();
             println!("### {task_id} ###");

@@ -14,8 +14,20 @@ pub struct JsonStore {
 }
 
 impl TaskStore for JsonStore {
-    fn get_tasks(&self) -> &Vec<Task> {
-        return &self.store;
+    fn get_tasks(&self, state_filter: String) -> Vec<Task> {
+        dbg!(&state_filter);
+        if state_filter == String::from("None") {
+            return self.store.clone();
+        } else {
+            let state_filer = TaskState::try_from(state_filter).unwrap();
+            let mut store: Vec<Task> = vec![];
+            for task in &self.store {
+                if task.get_state() == &state_filer {
+                    store.push(task.clone());
+                }
+            }
+            return store;
+        }
     }
 
     fn get_task(&self, id: u8) -> Option<&Task> {

@@ -9,7 +9,7 @@ fn main() {
     let mut store: JsonStore = JsonStore::load();
     let service = service::TaskService::new(&mut store);
     match cli::Command::parse() {
-        cli::Command::List => service.list(),
+        cli::Command::List(state_filter) => service.list(state_filter),
         cli::Command::Add(task) => service.add(task),
         cli::Command::Show(task_id) => service.show(task_id),
         cli::Command::Update((task_id, updated_task)) => service.update(task_id, updated_task),
