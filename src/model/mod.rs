@@ -1,5 +1,4 @@
-use json::JsonValue;
-use json::object;
+use json::{JsonValue, object};
 
 #[derive(PartialEq, Debug)]
 pub enum TaskState {

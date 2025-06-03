@@ -1,24 +1,24 @@
 use super::TaskStore;
 
-use crate::model;
+use crate::model::{Task, TaskState};
 
-use json;
+use json::JsonValue;
 use std::env;
 use std::fs;
-use std::path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct JsonStore {
-    store: Vec<model::Task>,
+    store: Vec<Task>,
     last_id: u8,
 }
 
 impl TaskStore for JsonStore {
-    fn get_tasks(&self) -> &Vec<model::Task> {
+    fn get_tasks(&self) -> &Vec<Task> {
         return &self.store;
     }
 
-    fn get_task(&self, id: u8) -> Option<&model::Task> {
+    fn get_task(&self, id: u8) -> Option<&Task> {
         for task in &self.store {
             let task_id: u8 = task.get_id();
             if task_id == id {
@@ -30,7 +30,7 @@ impl TaskStore for JsonStore {
 
     fn add_task(&mut self, task: String) -> u8 {
         let id: u8 = self.last_id + 1;
-        let task: model::Task = model::Task::new(id, task, model::TaskState::NotStarted);
+        let task: Task = Task::new(id, task, TaskState::NotStarted);
         self.store.push(task);
         self.last_id += 1;
         self.save();
@@ -73,19 +73,25 @@ impl TaskStore for JsonStore {
 
 impl JsonStore {
     pub fn load() -> Self {
-        let file_path: path::PathBuf = JsonStore::get_file_path();
+        let file_path: PathBuf = JsonStore::get_file_path();
         if JsonStore::file_exists(&file_path) {
             let source: String = fs::read_to_string(file_path).unwrap();
-            let json_object: json::JsonValue = json::parse(&source).unwrap();
-            Self::from_json(json_object)
+            let json_object: JsonValue = json::parse(&source).unwrap();
+            Self::from_json_array(json_object)
         } else {
-            let store: Vec<model::Task> = vec![];
+            let store: Vec<Task> = vec![];
             let last_id: u8 = 0;
             return JsonStore { store, last_id };
         }
     }
 
-    fn get_mut_task(&mut self, id: u8) -> Option<&mut model::Task> {
+    pub fn save(&self) {
+        let file_path: PathBuf = JsonStore::get_file_path();
+        let contents: String = self.to_json_array().to_string();
+        fs::write(file_path, contents).unwrap()
+    }
+
+    fn get_mut_task(&mut self, id: u8) -> Option<&mut Task> {
         for task in self.store.iter_mut() {
             if id == task.get_id() {
                 return Some(task);
@@ -93,10 +99,11 @@ impl JsonStore {
         }
         return None;
     }
-    fn from_json(json_object: json::JsonValue) -> JsonStore {
-        let mut store: Vec<model::Task> = vec![];
-        for member in json_object.members() {
-            let task: model::Task = model::Task::try_from(member).unwrap();
+
+    fn from_json_array(json_array: JsonValue) -> JsonStore {
+        let mut store: Vec<Task> = vec![];
+        for json_value in json_array.members() {
+            let task: Task = Task::try_from(json_value).unwrap();
             store.push(task);
         }
         let length: usize = store.len();
@@ -104,31 +111,25 @@ impl JsonStore {
         return JsonStore { store, last_id };
     }
 
-    pub fn save(&self) {
-        let file_path: path::PathBuf = JsonStore::get_file_path();
-        let contents: String = self.to_json().to_string();
-        fs::write(file_path, contents).unwrap()
-    }
-
-    fn to_json(&self) -> json::JsonValue {
-        let mut json_store: json::JsonValue = json::array![];
-        for member in &self.store {
-            let task: json::JsonValue = json::JsonValue::from(member);
-            json_store.push(task).unwrap();
+    fn to_json_array(&self) -> JsonValue {
+        let mut json_array: JsonValue = json::array![];
+        for task_object in &self.store {
+            let task: JsonValue = JsonValue::from(task_object);
+            json_array.push(task).unwrap();
         }
-        return json_store;
+        return json_array;
     }
 
-    fn get_file_path() -> path::PathBuf {
-        let home: path::PathBuf = match env::home_dir() {
+    fn get_file_path() -> PathBuf {
+        let home: PathBuf = match env::home_dir() {
             Some(home_path) => home_path,
             None => panic!("Can not read the home path"),
         };
-        let path: &path::Path = path::Path::new("tasks.json");
+        let path: &Path = Path::new("tasks.json");
         home.join(path)
     }
 
-    fn file_exists(file_path: &path::PathBuf) -> bool {
+    fn file_exists(file_path: &PathBuf) -> bool {
         file_path.exists()
     }
 }
